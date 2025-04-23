@@ -1,39 +1,44 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { InjectModel } from '@nestjs/mongoose';
-import { User } from './entities/user.entity';
-import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-
+import { PrismaService } from 'src/prisma/prisma.service';
+import { Role } from '@prisma/client';
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(User.name) private readonly user: Model<User>,
+    private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
   ) {}
 
   async findUser(name: string) {
-    let user = await this.user.findOne({ name });
+    const user = await this.prisma.user.findUnique({ where: { name } });
     return user;
   }
 
-  async register(data: CreateUserDto) {
-    let user = await this.findUser(data.name);
-    if (user) {
-      throw new BadRequestException('User already exists !');
+  async register(data: CreateUserDto, role: Role) {
+    const existingUser = await this.findUser(data.name);
+    if (existingUser) {
+      throw new BadRequestException('User already exists!');
     }
-    let hash = bcrypt.hashSync(data.password, 10);
 
-    let newUser = await this.user.create({
-      ...data,
-      password: hash,
+    const hashedPassword = bcrypt.hashSync(data.password, 10);
+
+
+    const newUser = await this.prisma.user.create({
+      data: {
+        name: data.name,
+        age: data.age,
+        password: hashedPassword,
+        gmail: data.gmail,
+        phone: data.phone,
+        role: role
+      },
     });
 
-    return newUser
+    return newUser;
   }
-
 
   async login(data: UpdateUserDto) {
     if (!data.name || !data.password) {
@@ -42,26 +47,24 @@ export class UserService {
       );
     }
 
-    let user = await this.findUser(data.name);
+    const user = await this.findUser(data.name);
     if (!user) {
       throw new BadRequestException('User not found');
     }
 
-    let match = bcrypt.compareSync(data.password, user.password);
-    if (!match) {
+    const isPasswordValid = bcrypt.compareSync(data.password, user.password);
+    if (!isPasswordValid) {
       throw new BadRequestException('Invalid password!');
     }
 
-    let token = this.jwt.sign({
+    const token = this.jwt.sign({
       id: user.id,
       role: user.role,
     });
+
     return { token };
   }
-
-
-
-  async userData(){
-    return "sorry wrong request !"
+  async userData() {
+    return 'Sorry, wrong request!';
   }
 }
