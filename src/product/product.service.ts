@@ -8,7 +8,11 @@ export class ProductService {
   constructor(private prisma: PrismaService) {}
 
   async create(createProductDto: CreateProductDto) {
-    return this.prisma.product.create({ data: createProductDto });
+    return this.prisma.product.create({
+      data: {
+        ...createProductDto,
+      },
+    });
   }
 
   async findAll() {

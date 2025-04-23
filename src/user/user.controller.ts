@@ -44,10 +44,4 @@ export class UserController {
   login(@Body() data: UpdateUserDto) {
     return this.userService.login(data);
   }
-
-  @UseGuards(AuthGuard)
-  @Get('/me')
-  meUser() {
-    return this.userService.userData();
-  }
 }

@@ -64,7 +64,4 @@ export class UserService {
 
     return { token };
   }
-  async userData() {
-    return 'Sorry, wrong request!';
-  }
 }

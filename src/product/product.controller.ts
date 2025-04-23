@@ -16,8 +16,9 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RoleDec } from 'src/user/decorator/roles.decorator';
 import { RolesGuard } from 'src/roles/roles.guard';
-import { Role } from '@prisma/client';
+import { ProStatus, Role } from '@prisma/client';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { ApiBody, ApiQuery } from '@nestjs/swagger';
 
 @Controller('products')
 export class ProductController {
@@ -27,9 +28,23 @@ export class ProductController {
   @UseGuards(RolesGuard)
   @UseGuards(AuthGuard)
   @Post()
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productService.create(createProductDto);
-  }
+  @ApiBody({
+    description: 'Create Product',
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Bread' },
+        price: { type: 'number', example: 5000 },
+        img: { type: 'string', example: 'photo.png' },
+        status: { type: 'string', enum: ['OLD', 'NEW', 'USED'] },
+      },
+    },
+  })
+  
+    create(@Body() createProductDto: CreateProductDto) {
+      return this.productService.create(createProductDto);
+    }
+    
 
   @Get()
   findAll() {
